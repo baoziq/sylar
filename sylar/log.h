@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <memory>
 #include <list>
-#include <stringstream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 
@@ -21,6 +21,27 @@ class LogEvent {
 	public:
 		typedef std::shared_ptr<LogEvent> ptr;
 		LogEvent();
+		const char* getFile() const {
+			return m_file;
+		}
+		int32_t getLine() const {
+			return m_line;
+		}
+		uint32_t getElapse() const {
+			return m_elapse;
+		}
+		uint32_t getThreadId() const {
+			return m_threadId;
+		}
+		uint32_t getFiberId() const {
+			return mfiberId;
+		}
+		uint64_t getTime() const {
+			return m_time;
+		}
+		const std::string& getContent() const {
+			return m_content;
+		}
 	private:
 		const char* m_file = nullptr;	// 文件名
 		int32_t m_line = 0;				// 行号
@@ -31,23 +52,35 @@ class LogEvent {
 		std::string m_content;			 
 };
 // 日志级别
-5
-	};
-};
+class LogLevel {
+	public:
+		enum Level {
+			UNKNOW = 0,
+			DEBUG = 1,
+			INFO = 2,
+			WARN = 3,
+			ERROR = 4,
+			FATAL = 5
+		}
+		static const char* ToString(LogLevel::Level level);
+}
 // 日记格式器
 class LogFormatter{
 	public:
 		typedef std::shared_ptr<LogFormatter> ptr;
-	;
-		std::string format(LogEvent::ptr event);	
+		LogFormatter(const std::string& pattern);
+		std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event);	
 	public:
 		class FormatItem {
 			public:
 				typedef std::shared_ptr<FormatItem> ptr;
+				FormatItem(const std::string& fmt = ""){
+
+				};
 				virtual ~FormatItem() {
 
 				}
-				virtual void format(std::ostream os, LogEvent::ptr event) = 0;
+				virtual void format(std::ostream os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0;
 		};
 		void init();
 	private:
@@ -59,7 +92,7 @@ class LogAppender {
 	public:
 		typedef std::shared_ptr<LogAppender> ptr;
 		virtual ~LogAppender() {};
-		virtual void log(LogLevel::Level level, LogEvent::ptr event) = 0; 
+		virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) = 0; 
 		void setFormatter(LogFormatter::ptr val) {
 			m_formatter = val;
 		}
@@ -90,6 +123,9 @@ class Logger {
 		}
 		void setLevel(LogLevel::Level val) {
 			m_level = val;
+		}
+		const std::string& getName() const {
+			return m_name;
 		}
 	private:
 		std::string m_name;		// 日志名称
